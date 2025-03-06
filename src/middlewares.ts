@@ -7,7 +7,7 @@ export function validateData(schema: z.ZodObject<any>) {
     try {
       schema.parse(req.body);
       next();
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map((issue: any) => ({
           message: `${issue.path.join(".")} is ${issue.message}`,
@@ -17,9 +17,9 @@ export function validateData(schema: z.ZodObject<any>) {
           .json({ error: "Invalid data", details: errorMessages });
       } else {
         const INTERNAL_SERVER_ERROR = STATUS_CODES.INTERNAL_SERVER_ERROR;
-        res.status(INTERNAL_SERVER_ERROR.code).json({
-          error: INTERNAL_SERVER_ERROR.message,
-        });
+        error.statusCode = INTERNAL_SERVER_ERROR.code;
+        error.message = INTERNAL_SERVER_ERROR.message;
+        next(error);
       }
     }
   };

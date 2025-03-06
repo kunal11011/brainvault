@@ -1,8 +1,11 @@
-import { model, Model, Schema } from "mongoose";
+import mongoose, { model, Model, Schema } from "mongoose";
+
+const CONNECTION_STRING = process.env.MONGOURL!;
+mongoose.connect(CONNECTION_STRING);
 
 const UserSchema = new Schema({
-  username: { type: String, unique: true },
-  password: { type: String, minLength: 4 },
+  email: { type: String, unique: true },
+  password: { type: String, minLength: 6 },
 });
 
 export const UserModel = model("User", UserSchema);
