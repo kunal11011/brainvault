@@ -33,13 +33,25 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserModel = void 0;
-// import "dotenv/config";
+exports.UserModel = exports.MemoryModel = exports.TagModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const constants_1 = require("./constants");
 const CONNECTION_STRING = process.env.MONGOURL;
 mongoose_1.default.connect(CONNECTION_STRING);
 const UserSchema = new mongoose_1.Schema({
     email: { type: String, unique: true },
     password: { type: String, minLength: 6 },
 });
+const TagSchema = new mongoose_1.Schema({
+    tag: { type: String, unique: true },
+});
+const MemorySchema = new mongoose_1.Schema({
+    type: { type: String, enum: constants_1.MEMORY_TYPE, required: true },
+    link: { type: String, required: true },
+    title: { type: String, required: true },
+    tags: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Tag" }],
+    userId: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "User" }],
+});
+exports.TagModel = (0, mongoose_1.model)("Tag", TagSchema);
+exports.MemoryModel = (0, mongoose_1.model)("Memory", MemorySchema);
 exports.UserModel = (0, mongoose_1.model)("User", UserSchema);

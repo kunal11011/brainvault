@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.STATUS_CODES = void 0;
+exports.MEMORY_TYPE = exports.STATUS_CODES = void 0;
 exports.STATUS_CODES = {
     SUCCESS: {
         code: 200,
@@ -68,3 +68,5 @@ exports.STATUS_CODES = {
         message: "The server, while acting as a gateway, did not receive a timely response from an upstream server.",
     },
 };
+// NOTE: Update zod validation schema when adding new type.
+exports.MEMORY_TYPE = ["document", "tweet", "youtube", "link"];

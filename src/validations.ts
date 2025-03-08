@@ -1,5 +1,9 @@
 import { z } from "zod";
-export const userValidation = z.object({
+import { MEMORY_TYPE } from "./constants";
+
+// const memoryTypes = MEMORY_TYPE as const;
+
+export const userSchema = z.object({
   email: z.string().email(),
   password: z
     .string()
@@ -8,4 +12,16 @@ export const userValidation = z.object({
       /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/,
       "Password shold be 6 characters long and must contain one letter and one digit."
     ),
+});
+
+// type: { type: String, enum: MEMORY_TYPE, required: true },
+// link: { type: String, required: true },
+// title: { type: String, required: true },
+// tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+
+export const memorySchema = z.object({
+  type: z.enum(["document", "tweet", "youtube", "link"]),
+  title: z.string(),  
+  link: z.string(),
+  tags: z.string().array(),
 });

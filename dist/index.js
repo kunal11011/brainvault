@@ -27,10 +27,7 @@ const SECRET_KEY = process.env.JWT_SECRET_KEY;
 const app = (0, express_1.default)();
 // app.use(bodyParser.json());
 app.use(express_1.default.json());
-app.get("/", (req, res, next) => {
-    res.send("Hello World!");
-});
-app.post("/api/v1/signup", (0, middlewares_1.validateData)(validations_1.userValidation), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/api/v1/signup", (0, middlewares_1.validateData)(validations_1.userSchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
         const hashedPass = yield bcrypt_1.default.hash(password, SALT_ROUNDS);
@@ -58,7 +55,7 @@ app.post("/api/v1/signup", (0, middlewares_1.validateData)(validations_1.userVal
         next(error);
     }
 }));
-app.post("/api/v1/signin", (0, middlewares_1.validateData)(validations_1.userValidation), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/api/v1/signin", (0, middlewares_1.validateData)(validations_1.userSchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
         const existingUser = yield db_1.UserModel.findOne({ email });
@@ -71,7 +68,7 @@ app.post("/api/v1/signin", (0, middlewares_1.validateData)(validations_1.userVal
         }
         const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
         const token = jsonwebtoken_1.default.sign({
-            id: existingUser._id,
+            userId: existingUser._id,
         }, SECRET_KEY);
         res.status(SUCCESS.code).json({
             token,
@@ -88,9 +85,46 @@ app.post("/api/v1/signin", (0, middlewares_1.validateData)(validations_1.userVal
         next(error);
     }
 }));
-app.post("/api/v1/content", (req, res, next) => { });
-app.get("/api/v1/content", (req, res, next) => {
-    res.json({ message: "Hello World" });
+app.post("/api/v1/content", middlewares_1.userMiddleware, (0, middlewares_1.validateData)(validations_1.memorySchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { type, link, title, tags } = req.body;
+        // TODO: check for existing tags and then add tags based on that if not present add new tag into the tag schema.
+        const newMemory = yield db_1.MemoryModel.create({
+            type,
+            link,
+            title,
+            tags,
+            userId: req.userId,
+        });
+        const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
+        res.status(SUCCESS.code).json({
+            message: SUCCESS.message,
+            name: SUCCESS.name,
+            data: newMemory,
+        });
+    }
+    catch (error) {
+        const SERVICE_UNAVAILABLE = constants_1.STATUS_CODES.SERVICE_UNAVAILABLE;
+        error.statusCode = error.statusCode || SERVICE_UNAVAILABLE.code;
+        error.message = error.message || SERVICE_UNAVAILABLE.message;
+        next(error);
+    }
+}));
+app.get("/api/v1/content", middlewares_1.userMiddleware, (req, res, next) => {
+    try {
+        const allMemories = db_1.MemoryModel.find({
+            userId: req.userId,
+        }).populate("email");
+        const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
+        res.status(SUCCESS.code).json({
+            message: SUCCESS.message,
+            name: SUCCESS.name,
+            data: allMemories,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
 });
 app.post("/api/v1/brain/share", (req, res, next) => { });
 app.get("/api/v1/brain/:shareLink", (req, res, next) => { });

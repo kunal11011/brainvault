@@ -10,10 +10,11 @@ import jwt, { Secret } from "jsonwebtoken";
 import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 
-import { UserModel } from "./db";
-import { validateData } from "./middlewares";
-import { userValidation } from "./validations";
+import { MemoryModel, UserModel } from "./db";
+import { userMiddleware, validateData } from "./middlewares";
+import { memorySchema, userSchema } from "./validations";
 import { STATUS_CODES } from "./constants";
+import { CustomRequest } from "./extendedtypes";
 
 // dotenv.config();
 const SALT_ROUNDS = Number(process.env.SALT_ROUNDS)!;
@@ -25,7 +26,7 @@ app.use(express.json());
 
 app.post(
   "/api/v1/signup",
-  validateData(userValidation),
+  validateData(userSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
@@ -60,7 +61,7 @@ app.post(
 
 app.post(
   "/api/v1/signin",
-  validateData(userValidation),
+  validateData(userSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
@@ -79,7 +80,7 @@ app.post(
       const SUCCESS = STATUS_CODES.SUCCESS;
       const token = jwt.sign(
         {
-          id: existingUser._id,
+          userId: existingUser._id,
         },
         SECRET_KEY
       );
@@ -100,14 +101,58 @@ app.post(
 );
 app.post(
   "/api/v1/content",
-  (req: Request, res: Response, next: NextFunction) => {}
-);
-app.get(
-  "/api/v1/content",
-  (req: Request, res: Response, next: NextFunction) => {
-    res.json({ message: "Hello World" });
+  userMiddleware,
+  validateData(memorySchema),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const { type, link, title, tags } = req.body;
+
+      // TODO: check for existing tags and then add tags based on that if not present add new tag into the tag schema.
+
+      const newMemory = await MemoryModel.create({
+        type,
+        link,
+        title,
+        tags,
+        userId: req.userId,
+      });
+
+      const SUCCESS = STATUS_CODES.SUCCESS;
+      res.status(SUCCESS.code).json({
+        message: SUCCESS.message,
+        name: SUCCESS.name,
+        data: newMemory,
+      });
+    } catch (error: any) {
+      const SERVICE_UNAVAILABLE = STATUS_CODES.SERVICE_UNAVAILABLE;
+      error.statusCode = error.statusCode || SERVICE_UNAVAILABLE.code;
+      error.message = error.message || SERVICE_UNAVAILABLE.message;
+      next(error);
+    }
   }
 );
+
+app.get(
+  "/api/v1/content",
+  userMiddleware,
+  (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const allMemories = MemoryModel.find({
+        userId: req.userId,
+      }).populate("email");
+
+      const SUCCESS = STATUS_CODES.SUCCESS;
+      res.status(SUCCESS.code).json({
+        message: SUCCESS.message,
+        name: SUCCESS.name,
+        data: allMemories,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 app.post(
   "/api/v1/brain/share",
   (req: Request, res: Response, next: NextFunction) => {}

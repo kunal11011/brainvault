@@ -75,3 +75,5 @@ export const STATUS_CODES = {
   },
 };
 
+// NOTE: Update zod validation schema when adding new type.
+export const MEMORY_TYPE = ["document", "tweet", "youtube", "link"];
