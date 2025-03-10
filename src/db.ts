@@ -5,12 +5,13 @@ const CONNECTION_STRING = process.env.MONGOURL!;
 mongoose.connect(CONNECTION_STRING);
 
 const UserSchema = new Schema({
-  email: { type: String, unique: true },
+  email: { type: String, unique: true, required: true },
   password: { type: String, minLength: 6 },
 });
 
 const TagSchema = new Schema({
-  tag: { type: String, unique: true },
+  tagName: { type: String, unique: true, required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User" },
 });
 
 const MemorySchema = new Schema({
@@ -18,7 +19,7 @@ const MemorySchema = new Schema({
   link: { type: String, required: true },
   title: { type: String, required: true },
   tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
-  userId: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  userId: { type: Schema.Types.ObjectId, ref: "User" },
 });
 
 export const TagModel = model("Tag", TagSchema);

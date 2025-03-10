@@ -10,9 +10,9 @@ import jwt, { Secret } from "jsonwebtoken";
 import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 
-import { MemoryModel, UserModel } from "./db";
+import { MemoryModel, TagModel, UserModel } from "./db";
 import { userMiddleware, validateData } from "./middlewares";
-import { memorySchema, userSchema } from "./validations";
+import { memorySchema, tagSchema, userSchema } from "./validations";
 import { STATUS_CODES } from "./constants";
 import { CustomRequest } from "./extendedtypes";
 
@@ -47,7 +47,7 @@ app.post(
         .status(SUCCESS.code)
         .json({ message: SUCCESS.message, name: SUCCESS.name, data: user });
     } catch (error: any) {
-      if ((error.message = "User Already Exists.")) {
+      if (error.message == "User Already Exists.") {
         const BAD_REQUEST = STATUS_CODES.BAD_REQUEST;
         error.statusCode = BAD_REQUEST.code;
       }
@@ -88,7 +88,7 @@ app.post(
         token,
       });
     } catch (error: any) {
-      if ((error.message = "Invalid Credentials.")) {
+      if (error.message == "Invalid Credentials.") {
         const FORBIDDEN = STATUS_CODES.FORBIDDEN;
         error.statusCode = FORBIDDEN.code;
       }
@@ -99,6 +99,7 @@ app.post(
     }
   }
 );
+
 app.post(
   "/api/v1/content",
   userMiddleware,
@@ -135,11 +136,11 @@ app.post(
 app.get(
   "/api/v1/content",
   userMiddleware,
-  (req: CustomRequest, res: Response, next: NextFunction) => {
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const allMemories = MemoryModel.find({
+      const allMemories = await MemoryModel.find({
         userId: req.userId,
-      }).populate("email");
+      }).populate("userId", "email");
 
       const SUCCESS = STATUS_CODES.SUCCESS;
       res.status(SUCCESS.code).json({
@@ -154,9 +155,64 @@ app.get(
 );
 
 app.post(
+  "/api/v1/tag",
+  validateData(tagSchema),
+  userMiddleware,
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const existingTag = await TagModel.findOne({ tagName: req.body.tagName });
+      if (existingTag) {
+        throw new Error("Tag Already Exists.");
+      }
+
+      const newTag = await TagModel.create({
+        tagName: req.body.tagName,
+        userId: req.userId,
+      });
+
+      const SUCCESS = STATUS_CODES.SUCCESS;
+      res
+        .status(SUCCESS.code)
+        .json({ message: SUCCESS.message, name: SUCCESS.name, data: newTag });
+    } catch (error: any) {
+      if (error.message == "Tag Already Exists.") {
+        const BAD_REQUEST = STATUS_CODES.BAD_REQUEST;
+        error.statusCode = BAD_REQUEST.code;
+      }
+      const INTERNAL_SERVER_ERROR = STATUS_CODES.INTERNAL_SERVER_ERROR;
+      error.statusCode = error.statusCode || INTERNAL_SERVER_ERROR.code;
+      error.message = error.message || INTERNAL_SERVER_ERROR.message;
+      next(error);
+    }
+  }
+);
+
+app.get(
+  "/api/v1/tag",
+  userMiddleware,
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const allTags = await TagModel.find({
+        userId: req.userId,
+      }).populate("userId", "email");
+
+      const SUCCESS = STATUS_CODES.SUCCESS;
+      res.status(SUCCESS.code).json({
+        message: SUCCESS.message,
+        name: SUCCESS.name,
+        data: allTags,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.post(
   "/api/v1/brain/share",
   (req: Request, res: Response, next: NextFunction) => {}
 );
+
 app.get(
   "/api/v1/brain/:shareLink",
   (req: Request, res: Response, next: NextFunction) => {}

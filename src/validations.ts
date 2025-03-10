@@ -21,7 +21,11 @@ export const userSchema = z.object({
 
 export const memorySchema = z.object({
   type: z.enum(["document", "tweet", "youtube", "link"]),
-  title: z.string(),  
+  title: z.string(),
   link: z.string(),
   tags: z.string().array(),
+});
+
+export const tagSchema = z.object({
+  tagName: z.string(),
 });

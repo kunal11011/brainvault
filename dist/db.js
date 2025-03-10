@@ -39,18 +39,19 @@ const constants_1 = require("./constants");
 const CONNECTION_STRING = process.env.MONGOURL;
 mongoose_1.default.connect(CONNECTION_STRING);
 const UserSchema = new mongoose_1.Schema({
-    email: { type: String, unique: true },
+    email: { type: String, unique: true, required: true },
     password: { type: String, minLength: 6 },
 });
 const TagSchema = new mongoose_1.Schema({
-    tag: { type: String, unique: true },
+    tagName: { type: String, unique: true, required: true },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
 });
 const MemorySchema = new mongoose_1.Schema({
     type: { type: String, enum: constants_1.MEMORY_TYPE, required: true },
     link: { type: String, required: true },
     title: { type: String, required: true },
     tags: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Tag" }],
-    userId: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "User" }],
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
 });
 exports.TagModel = (0, mongoose_1.model)("Tag", TagSchema);
 exports.MemoryModel = (0, mongoose_1.model)("Memory", MemorySchema);

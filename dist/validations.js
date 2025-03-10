@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.memorySchema = exports.userSchema = void 0;
+exports.tagSchema = exports.memorySchema = exports.userSchema = void 0;
 const zod_1 = require("zod");
 // const memoryTypes = MEMORY_TYPE as const;
 exports.userSchema = zod_1.z.object({
@@ -19,4 +19,7 @@ exports.memorySchema = zod_1.z.object({
     title: zod_1.z.string(),
     link: zod_1.z.string(),
     tags: zod_1.z.string().array(),
+});
+exports.tagSchema = zod_1.z.object({
+    tagName: zod_1.z.string(),
 });

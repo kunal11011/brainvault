@@ -45,7 +45,7 @@ app.post("/api/v1/signup", (0, middlewares_1.validateData)(validations_1.userSch
             .json({ message: SUCCESS.message, name: SUCCESS.name, data: user });
     }
     catch (error) {
-        if ((error.message = "User Already Exists.")) {
+        if (error.message == "User Already Exists.") {
             const BAD_REQUEST = constants_1.STATUS_CODES.BAD_REQUEST;
             error.statusCode = BAD_REQUEST.code;
         }
@@ -75,7 +75,7 @@ app.post("/api/v1/signin", (0, middlewares_1.validateData)(validations_1.userSch
         });
     }
     catch (error) {
-        if ((error.message = "Invalid Credentials.")) {
+        if (error.message == "Invalid Credentials.") {
             const FORBIDDEN = constants_1.STATUS_CODES.FORBIDDEN;
             error.statusCode = FORBIDDEN.code;
         }
@@ -110,11 +110,11 @@ app.post("/api/v1/content", middlewares_1.userMiddleware, (0, middlewares_1.vali
         next(error);
     }
 }));
-app.get("/api/v1/content", middlewares_1.userMiddleware, (req, res, next) => {
+app.get("/api/v1/content", middlewares_1.userMiddleware, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const allMemories = db_1.MemoryModel.find({
+        const allMemories = yield db_1.MemoryModel.find({
             userId: req.userId,
-        }).populate("email");
+        }).populate("userId", "email");
         const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
         res.status(SUCCESS.code).json({
             message: SUCCESS.message,
@@ -125,7 +125,49 @@ app.get("/api/v1/content", middlewares_1.userMiddleware, (req, res, next) => {
     catch (error) {
         next(error);
     }
-});
+}));
+app.post("/api/v1/tag", (0, middlewares_1.validateData)(validations_1.tagSchema), middlewares_1.userMiddleware, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const existingTag = yield db_1.TagModel.findOne({ tagName: req.body.tagName });
+        if (existingTag) {
+            throw new Error("Tag Already Exists.");
+        }
+        const newTag = yield db_1.TagModel.create({
+            tagName: req.body.tagName,
+            userId: req.userId,
+        });
+        const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
+        res
+            .status(SUCCESS.code)
+            .json({ message: SUCCESS.message, name: SUCCESS.name, data: newTag });
+    }
+    catch (error) {
+        if (error.message == "Tag Already Exists.") {
+            const BAD_REQUEST = constants_1.STATUS_CODES.BAD_REQUEST;
+            error.statusCode = BAD_REQUEST.code;
+        }
+        const INTERNAL_SERVER_ERROR = constants_1.STATUS_CODES.INTERNAL_SERVER_ERROR;
+        error.statusCode = error.statusCode || INTERNAL_SERVER_ERROR.code;
+        error.message = error.message || INTERNAL_SERVER_ERROR.message;
+        next(error);
+    }
+}));
+app.get("/api/v1/tag", middlewares_1.userMiddleware, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const allTags = yield db_1.TagModel.find({
+            userId: req.userId,
+        }).populate("userId", "email");
+        const SUCCESS = constants_1.STATUS_CODES.SUCCESS;
+        res.status(SUCCESS.code).json({
+            message: SUCCESS.message,
+            name: SUCCESS.name,
+            data: allTags,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}));
 app.post("/api/v1/brain/share", (req, res, next) => { });
 app.get("/api/v1/brain/:shareLink", (req, res, next) => { });
 app.use((err, req, res, next) => {
